@@ -5,7 +5,7 @@ import os
 #numpy to convert python lists to numpy arrays as it is needed by OpenCV face recognizers
 import numpy as np
 
-
+subjects = ["", "Hazem", "Shimaa"]
 
 
 
@@ -20,8 +20,7 @@ def detect_face(img):
     # there is also a more accurate but slow: Haar classifier
 
     face_cascade = cv2.CascadeClassifier('/home/hazem/opencv-3.2.0/data/lbpcascades/lbpcascade_frontalface.xml')
-    #print(face_cascade.load('/home/hazem/opencv-3.2.0/data/lbpcascades/lbpcascade_frontalface.xml')) 
-      #to check the directory
+    #print(face_cascade.load('/home/hazem/opencv-3.2.0/data/lbpcascades/lbpcascade_frontalface.xml')) #to check the directory
     # let's detect multiscale images(some images may be closer to camera than others)
     # result is a list of faces
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=5);
@@ -77,40 +76,77 @@ def prepare_training_data(data_folder_path):
     # ------STEP-3--------
     # go through each image name, read image,
     # detect face and add face to list of faces
-    for image_name in subject_images_names:
+        for image_name in subject_images_names:
 
-        # ignore system files like .DS_Store
-        if image_name.startswith("."):
-            continue;
+            # ignore system files like .DS_Store
+            if image_name.startswith("."):
+                continue;
 
-        # build image path
-        # sample image path = training-data/s1/1.pgm
-        image_path = subject_dir_path + "/" + image_name
+            # build image path
+            # sample image path = training-data/s1/1.pgm
+            image_path = subject_dir_path + "/" + image_name
 
-        # read image
-        image = cv2.imread(image_path)
+            # read image
+            image = cv2.imread(image_path)
 
-        # display an image window to show the image
-        cv2.imshow("Training on image...", image)
-        cv2.waitKey(100)
+            # display an image window to show the image
+            cv2.imshow("Training on image...", image)
+            cv2.waitKey(100)
 
-        # detect face
-        face, rect = detect_face(image)
+            # detect face
+            face, rect = detect_face(image)
 
-    # ------STEP-4--------
-    # we will ignore faces that are not detected
-    if face is not None:
-        # add face to list of faces
-        faces.append(face)
-        # add label for this face
-        labels.append(label)
+        # ------STEP-4--------
+        # we will ignore faces that are not detected
+        if face is not None:
+            # add face to list of faces
+            faces.append(face)
+            # add label for this face
+            labels.append(label)
 
-    cv2.destroyAllWindows()
-    cv2.waitKey(1)
-    cv2.destroyAllWindows()
+        cv2.destroyAllWindows()
+        cv2.waitKey(1)
+        cv2.destroyAllWindows()
 
     return faces, labels
 
+#################################################
+# function to draw rectangle on image
+# according to given (x, y) coordinates and
+# given width and heigh
+def draw_rectangle(img, rect):
+    (x, y, w, h) = rect
+    cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+
+# function to draw text on give image starting from
+# passed (x, y) coordinates.
+def draw_text(img, text, x, y):
+    cv2.putText(img, text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 2)
+#############################################################
+
+# this function recognizes the person in image passed
+# and draws a rectangle around detected face with name of the
+# subject
+def predict(test_img):
+
+
+    # make a copy of the image as we don't want to change original image
+    img = test_img.copy()
+    # detect face from the image
+    face, rect = detect_face(img)
+
+    # predict the image using our face recognizer
+    label = face_recognizer.predict(face)
+    # get name of respective label returned by face recognizer
+    label_text = subjects[label[0]]
+
+    # draw a rectangle around face detected
+    draw_rectangle(img, rect)
+    # draw name of predicted person
+    draw_text(img, label_text, rect[0], rect[1] - 5)
+
+    return img
 ###############################################################
 ###############################################################
 
@@ -127,3 +163,22 @@ print("Data prepared")
 print("Total faces: ", len(faces))
 print("Total labels: ", len(labels))
 
+
+face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+face_recognizer.train(faces, np.array(labels))
+print("Predicting images...")
+
+# load test images
+test_img1 = cv2.imread("/home/hazem/Pictures/8.jpg")
+#test_img2 = cv2.imread("/home/hazem/Pictures/7.jpg")
+
+# perform a prediction
+predicted_img1 = predict(test_img1)
+#predicted_img2 = predict(test_img2)
+print("Prediction complete")
+
+# display both images
+cv2.imshow("image", predicted_img1)
+#cv2.imshow(subjects[2], predicted_img2)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
