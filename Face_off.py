@@ -203,6 +203,7 @@ while True:
 
     cv2.imshow('camera', img)
     ##send id to the cloud here
+    ##if id!=0 then send it 
     k = cv2.waitKey(10) & 0xff  # Press 'ESC' for exiting video
     if k == 27:
         break
