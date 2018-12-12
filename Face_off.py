@@ -4,6 +4,10 @@ import cv2
 import os
 #numpy to convert python lists to numpy arrays as it is needed by OpenCV face recognizers
 import numpy as np
+#packages for attendance update on database
+from cloudant.client import Cloudant
+from cloudant.error import CloudantException
+from cloudant.result import Result, ResultByKey
 
 subjects = ["", "Hazem", "Shimaa"]
 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -203,6 +207,40 @@ while True:
 
     cv2.imshow('camera', img)
     ##send id to the cloud here
+    #connecting to cloudant database
+client = Cloudant.iam("b3e03381-f624-4db8-a3da-3588bface309-bluemix", "sckyMGqNGv8CX9aIcTDbrhYZYhYBDUfEXAJuXuN8SB1D")
+client.connect()
+databaseName = "attendance_toqa"
+myDatabase = client.create_database(databaseName)
+if myDatabase.exists():
+   print "'{0}' successfully created.\n".format(databaseName)
+
+#sending data
+data = {
+    '_id': '30e49415829c0933ff787e6b331b3f1d', # Setting _id is optional
+    'name': 'toqa',
+    'absence': '30',
+    
+    }
+my_document = myDatabase.create_document(data)
+#if my_document.exists():
+ #   print('SUCCESS!!')
+#doc_exists = '30e49415829c0933ff787e6b331b3f1d' in myDatabase
+
+#if doc_exists:
+ #   print('document with _id 30e49415829c0933ff787e6b331b3f1d exists')
+
+#updating attendance
+my_document = myDatabase['30e49415829c0933ff787e6b331b3f1d']
+my_document['nameField'] = "toqa"
+my_document['number'] = (my_document['number']+1)
+
+# You must save the document in order to update it on the database
+my_document.save()
+print(my_document)
+
+
+    
     ##if id!=0 then send it 
     k = cv2.waitKey(10) & 0xff  # Press 'ESC' for exiting video
     if k == 27:
