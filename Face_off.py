@@ -196,7 +196,7 @@ while True:
         id, confidence = face_recognizer.predict(gray[y:y + h, x:x + w])
         # Check if confidence is less them 100 ==> "0" is perfect match
         if (confidence < 100):
-            id = subjects[id]                             ##if you want to send id as a number make this line a comment
+          #  id = subjects[id]                             ##if you want to send id as a number make this line a comment
             confidence = "  {0}%".format(round(100 - confidence))
         else:
             id = "0"
@@ -216,8 +216,9 @@ if myDatabase.exists():
    print "'{0}' successfully created.\n".format(databaseName)
 
 #sending data
+#this is optional, you can add data from code, or add it on cloudant directly.
 data = {
-    '_id': '30e49415829c0933ff787e6b331b3f1d', # Setting _id is optional
+    '_id': id, # Setting _id is optional
     'name': 'toqa',
     'absence': '30',
     
@@ -225,15 +226,11 @@ data = {
 my_document = myDatabase.create_document(data)
 #if my_document.exists():
  #   print('SUCCESS!!')
-#doc_exists = '30e49415829c0933ff787e6b331b3f1d' in myDatabase
-
-#if doc_exists:
- #   print('document with _id 30e49415829c0933ff787e6b331b3f1d exists')
-
-#updating attendance
-my_document = myDatabase['30e49415829c0933ff787e6b331b3f1d']
-my_document['nameField'] = "toqa"
-my_document['number'] = (my_document['number']+1)
+doc_exists = id in myDatabase
+if doc_exists:
+    #updating attendance
+    my_document = myDatabase[id]
+    my_document['number'] = (my_document['number']+1)
 
 # You must save the document in order to update it on the database
 my_document.save()
