@@ -208,21 +208,25 @@ while True:
     cv2.imshow('camera', img)
     ##send id to the cloud here
     #connecting to cloudant database
+    #Using IAM authentication client = Cloudant.iam("<username>", "<apikey>")
 client = Cloudant.iam("b3e03381-f624-4db8-a3da-3588bface309-bluemix", "sckyMGqNGv8CX9aIcTDbrhYZYhYBDUfEXAJuXuN8SB1D")
 client.connect()
+#provide a name for your database and creat it.
 databaseName = "attendance_toqa"
 myDatabase = client.create_database(databaseName)
+#Confirm that the database was created successfully
 if myDatabase.exists():
    print "'{0}' successfully created.\n".format(databaseName)
 
-#sending data
+#sending data(sample data)
 #this is optional, you can add data from code, or add it on cloudant directly.
 data = {
     '_id': id, # Setting _id is optional
     'name': 'toqa',
-    'absence': '30',
+    'attendance': '30',
     
     }
+#put that data on database.
 my_document = myDatabase.create_document(data)
 #if my_document.exists():
  #   print('SUCCESS!!')
@@ -230,7 +234,7 @@ doc_exists = id in myDatabase
 if doc_exists:
     #updating attendance
     my_document = myDatabase[id]
-    my_document['number'] = (my_document['number']+1)
+    my_document['attendance'] = (my_document['attendance']+1)
 
 # You must save the document in order to update it on the database
 my_document.save()
