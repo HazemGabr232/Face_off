@@ -4,12 +4,24 @@ import cv2
 import os
 #numpy to convert python lists to numpy arrays as it is needed by OpenCV face recognizers
 import numpy as np
-#packages for attendance update on database
+
 from cloudant.client import Cloudant
 from cloudant.error import CloudantException
 from cloudant.result import Result, ResultByKey
 
-subjects = ["", "Hazem", "Shimaa"]
+
+
+client = Cloudant.iam("52bb88bb-586b-4273-ab0a-b15cbffeff05-bluemix", "6_hCZXRWwRuzrTEfRbc7V4jbNwTFybAErt0YFRYLYkWd")
+client.connect()
+databaseName = "attendanceone"
+myDatabase = client.create_database(databaseName)
+if myDatabase.exists():
+   print( "'{0}' successfully created.\n".format(databaseName))
+
+
+flag=[0,0,0]
+cloud=['0' , '5643f1c8a5133f5db5c4731773fc91a9' , 'a8cd83d68c84b834f4fbf42e0d20ef02']
+subjects = ["", "Adel","Hazem"]
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 
@@ -24,7 +36,7 @@ def detect_face(img):
     # load OpenCV face detector, I am using LBP which is fast
     # there is also a more accurate but slow: Haar classifier
 
-    face_cascade = cv2.CascadeClassifier('/home/hazem/opencv-3.2.0/data/lbpcascades/lbpcascade_frontalface.xml')
+    face_cascade = cv2.CascadeClassifier('E:\PROGS\opencv\opencv\sources\data\lbpcascades/lbpcascade_frontalface.xml')
     #print(face_cascade.load('/home/hazem/opencv-3.2.0/data/lbpcascades/lbpcascade_frontalface.xml')) #to check the directory
     # let's detect multiscale images(some images may be closer to camera than others)
     # result is a list of faces
@@ -161,7 +173,7 @@ def predict(test_img):
 # one list will contain all the faces
 # and the other list will contain respective labels for each face
 print("Preparing data...")
-faces, labels = prepare_training_data("/home/hazem/faceoff")
+faces, labels = prepare_training_data("C:/Users/Adel/Desktop/faceoff")
 print("Data prepared")
 
 # print total faces and labels
@@ -183,69 +195,64 @@ while True:
     ret, img = cam.read()
     img = cv2.flip(img, 1)  # Flip vertically
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier('/home/hazem/opencv-3.2.0/data/lbpcascades/lbpcascade_frontalface.xml')
+    face_cascade = cv2.CascadeClassifier('E:/PROGS/opencv/opencv/sources/data/lbpcascades/lbpcascade_frontalface.xml')
 
     faces = face_cascade.detectMultiScale(
         gray,
         scaleFactor=1.2,
         minNeighbors=5,
-        minSize=(int(minW), int(minH)),
+        minSize=(int(minW), int(minH))
     )
     for (x, y, w, h) in faces:
         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
         id, confidence = face_recognizer.predict(gray[y:y + h, x:x + w])
+        id=int(id)
+        #print (type(id))
         # Check if confidence is less them 100 ==> "0" is perfect match
         if (confidence < 100):
-          #  id = subjects[id]                             ##if you want to send id as a number make this line a comment
+           # id = subjects[id]                             ##if you want to send id as a number make this line a comment
             confidence = "  {0}%".format(round(100 - confidence))
         else:
-            id = "0"
+            id = 0
             confidence = "  {0}%".format(round(100 - confidence))
 
         cv2.putText(img, str(id), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
         cv2.putText(img, str(confidence), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
 
     cv2.imshow('camera', img)
-    ##send id to the cloud here
-    #connecting to cloudant database
-    #Using IAM authentication client = Cloudant.iam("<username>", "<apikey>")
-client = Cloudant.iam("b3e03381-f624-4db8-a3da-3588bface309-bluemix", "sckyMGqNGv8CX9aIcTDbrhYZYhYBDUfEXAJuXuN8SB1D")
-client.connect()
-#provide a name for your database and creat it.
-databaseName = "attendance_toqa"
-myDatabase = client.create_database(databaseName)
-#Confirm that the database was created successfully
-if myDatabase.exists():
-   print "'{0}' successfully created.\n".format(databaseName)
-
-#sending data(sample data)
-#this is optional, you can add data from code, or add it on cloudant directly.
-data = {
-    '_id': id, # Setting _id is optional
-    'name': 'toqa',
-    'attendance': '30',
+    if id==0:
+       idindex=0
+    if id==1:
+       idindex=1
+    if id==2:
+       idindex=2
+    if id==3:
+       idindex=3
     
-    }
-#put that data on database.
-my_document = myDatabase.create_document(data)
-#if my_document.exists():
- #   print('SUCCESS!!')
-doc_exists = id in myDatabase
-if doc_exists:
-    #updating attendance
-    my_document = myDatabase[id]
-    my_document['attendance'] = (my_document['attendance']+1)
-
-# You must save the document in order to update it on the database
-my_document.save()
-print(my_document)
+    if flag[idindex]==0:
+        ##send id to the cloud here
+        if idindex!=0: #then send it
+        #print (id)
+            doc_exists = cloud[idindex] in myDatabase
 
 
-    
-    ##if id!=0 then send it 
-    k = cv2.waitKey(10) & 0xff  # Press 'ESC' for exiting video
-    if k == 27:
-        break
+            if doc_exists:
+                    # print('document with _id 5643f1c8a5133f5d65c4731773fc91a9 exists')
+
+                my_document = myDatabase[cloud[idindex]]
+
+                my_document['numberField'] = (my_document['numberField'] + 1)
+
+                # You must save the document in order to update it on the database
+            flag[idindex]=1
+            my_document.save()
+
+        k = cv2.waitKey(10) & 0xff  # Presss 'ESC' for exiting video
+        if k == 27:
+            break
+
+flag=(0)  #make all flags equal zero
+
 # Do a bit of cleanup
 print("\n [INFO] Exiting Program and cleanup stuff")
 cam.release()
