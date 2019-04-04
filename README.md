@@ -1,2 +1,2 @@
 # Face_off
-Smart attendence system using openCV and cloud computing
+Smart attendance system using openCV and cloud computing
